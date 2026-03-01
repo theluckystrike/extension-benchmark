@@ -1,0 +1,37 @@
+{
+    "name": "extension-benchmark",
+    "version": "0.1.0",
+    "description": "Performance benchmarking for Chrome extensions — measure startup time, memory usage, API call latency, and generate performance reports.",
+    "author": "Zovo <hello@zovo.one>",
+    "license": "MIT",
+    "keywords": [
+        "chrome-extension",
+        "benchmark",
+        "performance",
+        "profiling",
+        "memory",
+        "latency",
+        "manifest-v3",
+        "browser-extension",
+        "metrics"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/theluckystrike/extension-benchmark.git"
+    },
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "files": [
+        "dist",
+        "README.md",
+        "LICENSE"
+    ],
+    "scripts": {
+        "build": "tsc",
+        "prepublishOnly": "npm run build"
+    },
+    "devDependencies": {
+        "@types/chrome": "^0.0.260",
+        "typescript": "^5.3.3"
+    }
+}
