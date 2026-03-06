@@ -1,113 +1,210 @@
-# extension-benchmark — Performance Benchmarking for Extensions
+# extension-benchmark
 
-> **Built by [Zovo](https://zovo.one)** | `npm i extension-benchmark`
+Performance benchmarking for Chrome extensions - measure execution time, throughput, and memory usage.
 
-Measure execution time, A/B comparisons, memory monitoring, and throughput metrics for Chrome extensions.
+Built by theluckystrike | npm i extension-benchmark
 
-## Features
+## OVERVIEW
 
-- **Execution Timing** - Measure how long functions take to run
-- **Memory Monitoring** - Track memory usage before/after operations
-- **A/B Comparisons** - Compare performance of two implementations
-- **Throughput Metrics** - Measure operations per second
-- **Formatted Results** - Human-readable output
+extension-benchmark is a lightweight TypeScript library for measuring performance metrics in Chrome extensions. It provides tools for timing function execution, comparing implementation performance, and monitoring memory usage.
 
-## Installation
+## INSTALLATION
 
 ```bash
 npm install extension-benchmark
 ```
 
-## Usage
+## USAGE
 
 ### Basic Timing
+
+Measure how long a function takes to execute.
+
+```typescript
+import { Benchmark } from 'extension-benchmark';
+
+const { result, durationMs } = await Benchmark.time('myFunction', () => {
+  // Your code here
+  doWork();
+});
+
+console.log(`Execution took ${durationMs}ms`);
+```
+
+### Running Multiple Iterations
+
+Run a benchmark multiple times to get average, min, and max execution times.
 
 ```typescript
 import { Benchmark } from 'extension-benchmark';
 
 const result = await Benchmark.run('myFunction', () => {
-  // Your code here
   doWork();
 }, 1000); // Run 1000 iterations
 
 console.log(Benchmark.formatResults([result]));
 ```
 
-### Memory Monitoring
+The result object contains:
+- `name` - Benchmark identifier
+- `runs` - Number of iterations
+- `avgMs` - Average execution time in milliseconds
+- `minMs` - Minimum execution time
+- `maxMs` - Maximum execution time
+- `opsPerSec` - Operations per second
 
-```typescript
-import { MemoryMonitor } from 'extension-benchmark';
+### Comparing Two Implementations
 
-const before = MemoryMonitor.getCurrentMemory();
-await doHeavyOperation();
-const after = MemoryMonitor.getCurrentMemory();
-
-console.log(`Memory increased by: ${after - before} bytes`);
-```
-
-### A/B Comparison
-
-```typescript
-import { Benchmark, compare } from 'extension-benchmark';
-
-const resultA = await Benchmark.run('implementationA', () => implA(), 100);
-const resultB = await Benchmark.run('implementationB', () => implB(), 100);
-
-compare([resultA, resultB]).forEach(console.log);
-```
-
-### Throughput Metrics
+Compare the performance of two different implementations.
 
 ```typescript
 import { Benchmark } from 'extension-benchmark';
 
-const throughput = await Benchmark.measureThroughput(
-  'operations',
-  () => processItem(),
-  1000
+const comparison = await Benchmark.compare(
+  'implementationA', () => implA(),
+  'implementationB', () => implB(),
+  100
 );
 
-console.log(`Throughput: ${throughput} ops/sec`);
+console.log(`${comparison.faster} is faster by ${comparison.speedup}`);
 ```
 
-## API Reference
+### Memory Monitoring
 
-### Benchmark.run(name, fn, iterations)
+Track memory usage before and after operations.
 
-Run a function multiple times and measure execution time.
+```typescript
+import { MemoryMonitor } from 'extension-benchmark';
+
+const before = MemoryMonitor.getCurrent();
+await doHeavyOperation();
+const after = MemoryMonitor.getCurrent();
+
+console.log(`Memory increased by: ${after - before} bytes`);
+```
+
+### Periodic Memory Monitoring
+
+Take snapshots of memory usage at regular intervals.
+
+```typescript
+import { MemoryMonitor } from 'extension-benchmark';
+
+const monitor = new MemoryMonitor();
+
+// Start monitoring every 5 seconds
+const interval = monitor.startMonitoring(5000);
+
+// Take a snapshot manually
+monitor.snapshot();
+
+// Get history of snapshots
+const history = monitor.getHistory();
+console.log(history);
+
+// Stop monitoring
+clearInterval(interval);
+```
+
+### Static Memory Utilities
+
+```typescript
+import { MemoryMonitor } from 'extension-benchmark';
+
+// Get current memory usage in bytes
+const current = MemoryMonitor.getCurrent();
+
+// Get memory limit in bytes
+const limit = MemoryMonitor.getLimit();
+
+// Get usage percentage
+const percent = MemoryMonitor.getUsagePercent();
+```
+
+## API REFERENCE
+
+### Benchmark Class
+
+**Benchmark.time(name, fn)**
+
+Times a single function execution.
+
+- `name` - Identifier for this measurement
+- `fn` - Function to time (sync or async)
+- Returns Promise resolving to `{ result: T, durationMs: number }`
+
+**Benchmark.run(name, fn, runs)**
+
+Runs a function multiple times and collects statistics.
 
 - `name` - Identifier for this benchmark
-- `fn` - Function to benchmark (synchronous)
-- `iterations` - Number of times to run
+- `fn` - Function to benchmark
+- `runs` - Number of iterations (default: 100)
+- Returns Promise resolving to `BenchmarkResult`
 
-Returns a `BenchmarkResult` with:
-- `name` - Benchmark name
-- `mean` - Average execution time (ms)
-- `median` - Median execution time (ms)
-- `stdDev` - Standard deviation
-- `min` / `max` - Range of results
+**Benchmark.compare(nameA, fnA, nameB, fnB, runs)**
 
-### Benchmark.formatResults(results)
+Compares two implementations side by side.
 
-Format benchmark results for console output.
+- `nameA` - Name of first implementation
+- `fnA` - First function
+- `nameB` - Name of second implementation
+- `fnB` - Second function
+- `runs` - Number of iterations (default: 100)
+- Returns Promise resolving to `{ a, b, faster, speedup }`
 
-### MemoryMonitor.getCurrentMemory()
+**Benchmark.formatResults(results)**
 
-Get current memory usage. Returns object with:
-- `heapUsed` - V8 heap used (bytes)
-- `heapTotal` - V8 heap total (bytes)
-- `external` - External memory (bytes)
+Formats benchmark results as a markdown table.
 
-### Benchmark.measureThroughput(name, fn, maxIterations)
+- `results` - Array of BenchmarkResult objects
+- Returns string containing markdown table
 
-Measure how many operations can be completed per second.
+### MemoryMonitor Class
 
-## Browser Compatibility
+**new MemoryMonitor()**
 
-Works in Chrome extensions with access to:
-- `performance.now()`
-- `performance.memory` (Chrome-specific)
+Creates a new memory monitor instance.
 
-## License
+**monitor.snapshot()**
 
-MIT License
+Takes a memory snapshot. Requires Chrome with performance.memory API.
+
+**monitor.getHistory()**
+
+Returns array of `{ timestamp, mb }` objects from all snapshots.
+
+**monitor.startMonitoring(intervalMs)**
+
+Starts periodic snapshotting.
+
+- `intervalMs` - Interval in milliseconds (default: 5000)
+- Returns NodeJS.Timeout
+
+**MemoryMonitor.getCurrent()**
+
+Static method. Returns current memory usage in bytes.
+
+**MemoryMonitor.getLimit()**
+
+Static method. Returns memory limit in bytes.
+
+**MemoryMonitor.getUsagePercent()**
+
+Static method. Returns percentage of available memory in use.
+
+## BROWSER COMPATIBILITY
+
+This library requires a Chrome environment with access to:
+- `performance.now()` - High-resolution timing
+- `performance.memory` - Chrome-specific memory metrics
+
+These APIs are available in Chrome extensions and can be polyfilled for other environments.
+
+## ABOUT
+
+extension-benchmark is maintained by theluckystrike.
+
+For questions and support, please open an issue on GitHub.
+
+Learn more about extension development at https://zovo.one
