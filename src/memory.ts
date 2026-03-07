@@ -29,7 +29,7 @@ export class MemoryMonitor {
     }
 
     /** Start periodic monitoring */
-    startMonitoring(intervalMs: number = 5000): NodeJS.Timeout {
+    startMonitoring(intervalMs: number = 5000): ReturnType<typeof setInterval> {
         return setInterval(() => this.snapshot(), intervalMs) as any;
     }
 }
